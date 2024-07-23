@@ -32,45 +32,60 @@
  * @size:
  *	number of valid bytes stored in @data
  */
+/**
+ * struct persistent_ram_buffer - 持久的环形RAM缓冲区结构
+ *
+ * @sig:
+ * 用于指示头部的签名（PERSISTENT_RAM_SIG 异或 PRZ 类型值）
+ * @start:
+ * 存储字节开始处在 @data 中的偏移量
+ * @size:
+ * 在 @data 中存储的有效字节数
+ */
 struct persistent_ram_buffer {
-	uint32_t    sig;
-	atomic_t    start;
-	atomic_t    size;
-	uint8_t     data[];
+	uint32_t    sig;    // 缓冲区头部的签名
+	atomic_t    start;  // 开始位置的偏移量，使用原子类型保证操作的原子性
+	atomic_t    size;   // 缓冲区中的有效字节数，使用原子类型保证操作的原子性
+	uint8_t     data[]; // 柔性数组成员，用于存储实际的数据
 };
 
+/* 定义持久性RAM区的魔数签名 'DBGC' */
 #define PERSISTENT_RAM_SIG (0x43474244) /* DBGC */
 
 static inline size_t buffer_size(struct persistent_ram_zone *prz)
 {
-	return atomic_read(&prz->buffer->size);
+	return atomic_read(&prz->buffer->size);	// 返回持久性RAM区域的缓冲区大小
 }
 
 static inline size_t buffer_start(struct persistent_ram_zone *prz)
 {
-	return atomic_read(&prz->buffer->start);
+	return atomic_read(&prz->buffer->start);	// 返回持久性RAM区域的缓冲区起始位置
 }
 
 /* increase and wrap the start pointer, returning the old value */
+/* 增加并环绕起始指针，返回旧值 */
 static size_t buffer_start_add(struct persistent_ram_zone *prz, size_t a)
 {
-	int old;
-	int new;
-	unsigned long flags = 0;
+	int old;  // 用于存储旧的起始位置
+	int new;  // 计算新的起始位置
+	unsigned long flags = 0;  // 用于保存中断状态，因为可能需要禁用中断
 
+	// 检查是否需要锁定缓冲区
 	if (!(prz->flags & PRZ_FLAG_NO_LOCK))
-		raw_spin_lock_irqsave(&prz->buffer_lock, flags);
+		raw_spin_lock_irqsave(&prz->buffer_lock, flags);	// 锁定缓冲区，禁用中断
 
-	old = atomic_read(&prz->buffer->start);
-	new = old + a;
+	old = atomic_read(&prz->buffer->start);	// 读取当前起始位置
+	new = old + a;	// 增加a大小到起始位置
+	// 确保起始位置不超出缓冲区总大小
 	while (unlikely(new >= prz->buffer_size))
-		new -= prz->buffer_size;
-	atomic_set(&prz->buffer->start, new);
+		new -= prz->buffer_size;	// 环绕处理，如果超过了缓冲区大小则从头开始
+	atomic_set(&prz->buffer->start, new);	// 更新缓冲区的起始位置
 
+	// 如果之前加锁了，现在解锁
 	if (!(prz->flags & PRZ_FLAG_NO_LOCK))
-		raw_spin_unlock_irqrestore(&prz->buffer_lock, flags);
+		raw_spin_unlock_irqrestore(&prz->buffer_lock, flags);	// 解锁缓冲区，恢复中断
 
-	return old;
+	return old;	// 返回更新前的起始位置
 }
 
 /* increase the size counter until it hits the max size */
