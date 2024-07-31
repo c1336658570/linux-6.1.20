@@ -207,8 +207,8 @@ static bool pstore_cannot_block_path(enum kmsg_dump_reason reason)
 	 * regardless of reason.
 	 */
 	/*
-   * 在NMI路径中，不论出于何种原因，pstore都不应该被阻塞。
-   */
+	 * 在NMI路径中，不论出于何种原因，pstore都不应该被阻塞。
+	 */
 	if (in_nmi())	// 如果当前处于NMI中，则直接返回true
 		return true;
 
@@ -221,8 +221,8 @@ static bool pstore_cannot_block_path(enum kmsg_dump_reason reason)
 	 * pstore_info::buf_lock.
 	 */
 	/*
-   * 紧急重启不应该因为在pstore_info::buf_lock上自旋而被阻塞。
-   */
+	 * 紧急重启不应该因为在pstore_info::buf_lock上自旋而被阻塞。
+	 */
 	case KMSG_DUMP_EMERG:
 		return true;
 	default:
@@ -960,10 +960,10 @@ void pstore_get_backend_records(struct pstore_info *psi,
 	 * the record.buf, so free it only on failure.
 	 */
 	/*
-   * 后端回调 read() 分配 record.buf。decompress_record()
-   * 可能会重新分配 record.buf。如果成功，pstore_mkfile() 将保留
-   * record.buf，因此仅在失败时释放它。
-   */
+	 * 后端回调 read() 分配 record.buf。decompress_record()
+	 * 可能会重新分配 record.buf。如果成功，pstore_mkfile() 将保留
+	 * record.buf，因此仅在失败时释放它。
+	 */
 	// 使用计数器防止潜在的无限循环
 	for (; stop_loop; stop_loop--) {
 		struct pstore_record *record;

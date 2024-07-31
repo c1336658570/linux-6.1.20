@@ -38,6 +38,12 @@
 
 struct persistent_ram_buffer;
 struct rs_control;	// 前向声明Reed-Solomon控制结构，用于纠错编码处理。
+/*
+ * block_size: 这是每个数据块的大小。在纠错编码中，数据被分成多个块，每个块独立进行错误检测和修正。
+ * ecc_size: 这是每个数据块所需的错误更正码的额外字节数。更多的ECC字节意味着能够检测和修正更多的错误。
+ * symsize: 符号大小，通常用位（bit）表示。这决定了纠错算法处理的数据单位。例如，8位symsize意味着算法将数据以每8位进行一次处理。
+ * poly: 这是一个生成多项式，用于Reed-Solomon编码。这个多项式决定了生成纠错码的方法。
+ */
 struct persistent_ram_ecc_info {
 	int block_size;   // 块大小，通常指一个数据块的字节数。
 	int ecc_size;     // ECC（错误更正码）大小，指每个数据块需要的额外字节数。
